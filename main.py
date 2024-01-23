@@ -3,6 +3,7 @@ import json
 import requests
 import requests.auth
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 #######################
 # Get API credentials #
@@ -23,12 +24,14 @@ headers['Authorization'] = f"bearer {auth_response.json()['access_token']}"
 # Gather most popular subreddits #
 ##################################
 
+# top subreddits by number of subscribers
 top_subreddits_url = 'https://www.reddit.com/best/communities/{}/'
 
 # Each page is 250 subreddits
 pages = 4
 
 # Gets subreddit names
+print("Gathering subreddits...")
 subreddits = [
     subreddit.text.strip()
     for i
@@ -54,8 +57,9 @@ dtypes = ['object', 'object', 'object', 'int64', 'int64', 'int64']
 
 posts = pd.DataFrame(columns=fields).astype(dict(zip(fields, dtypes)))
 
-for subreddit in subreddits:
-    print(f"Parsing {subreddit}")
+for subreddit in tqdm(subreddits, desc='Parsing Subreddits', unit='Subreddit'):
     subreddit_top = requests.get(website+subreddit+"/top/?t=all", params={'limit': 100}, headers=headers).json()
     top_100_posts = pd.json_normalize(data=subreddit_top['data'], record_path='children')[fields]
     posts = pd.concat([posts, top_100_posts])
+
+posts.to_csv('top_100_alltime_posts_top_1000_subs.csv')
