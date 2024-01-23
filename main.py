@@ -12,7 +12,7 @@ keys = pd.read_csv('keys.csv')
 auth = requests.auth.HTTPBasicAuth(keys['PUBLIC_KEY'][0], keys['SECRET_KEY'][0])
 data = {
     'grant_type': 'password',
-    'username': keys['UserName'],
+    'username': keys['UserName'][0],
     'password': keys['RedditPW'][0]
 }
 headers = {'User-Agent': 'MyAPI/0.0.1'}
@@ -26,7 +26,7 @@ headers['Authorization'] = f"bearer {auth_response.json()['access_token']}"
 top_subreddits_url = 'https://www.reddit.com/best/communities/{}/'
 
 # Each page is 250 subreddits
-pages = 20
+pages = 4
 
 # Gets subreddit names
 subreddits = [
@@ -55,6 +55,7 @@ dtypes = ['object', 'object', 'object', 'int64', 'int64', 'int64']
 posts = pd.DataFrame(columns=fields).astype(dict(zip(fields, dtypes)))
 
 for subreddit in subreddits:
+    print(f"Parsing {subreddit}")
     subreddit_top = requests.get(website+subreddit+"/top/?t=all", params={'limit': 100}, headers=headers).json()
     top_100_posts = pd.json_normalize(data=subreddit_top['data'], record_path='children')[fields]
     posts = pd.concat([posts, top_100_posts])
